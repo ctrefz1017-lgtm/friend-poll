@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Poll results (private)</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥧</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Young+Serif&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<main class="wide" id="app"><p class="hint">Loading results…</p></main>
+
+<script>
+const app = document.getElementById("app");
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const key = new URLSearchParams(location.search).get("key") || "";
+const mt = (iso) => new Date(iso).toLocaleString("en-US", { timeZone: "America/Denver", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " MT";
+
+async function load() {
+  try {
+    const r = await fetch("/api/admin?key=" + encodeURIComponent(key), { cache: "no-store" });
+    const d = await r.json();
+    if (!r.ok) { app.innerHTML = `<p class="error">${esc(d.error)}</p>`; return; }
+    const max = Math.max(1, ...d.counts);
+    app.innerHTML = `
+      <h1>${esc(d.question)}</h1>
+      <p class="hint">${d.votes.length} ${d.votes.length === 1 ? "person has" : "people have"} voted. Only you can see names on this page.</p>
+      ${d.options.map((o, i) => `
+        <div class="row">
+          <div class="row-top"><span>${esc(o)}</span><span>${d.counts[i]}</span></div>
+          <div class="track"><div class="fill ${d.counts[i] ? "has" : ""}" style="width:${(d.counts[i] / max) * 100}%"></div></div>
+        </div>`).join("")}
+      <h2>Who picked what</h2>
+      ${d.votes.length ? `
+      <div class="scroll"><table>
+        <thead><tr><th>Name</th>${d.options.map((o) => `<th>${esc(o)}</th>`).join("")}<th>Voted</th></tr></thead>
+        <tbody>${d.votes.map((v) => `<tr><td>${esc(v.name)}</td>${d.options.map((_, i) => v.choices.includes(i) ? `<td class="check yes">✓</td>` : `<td class="check"></td>`).join("")}<td>${mt(v.at)}</td></tr>`).join("")}</tbody>
+      </table></div>` : `<p class="meta">No votes yet. Text the poll link to your friends to get started.</p>`}
+      <p class="meta"><button class="link" type="button" onclick="load()">Refresh results</button></p>`;
+  } catch {
+    app.innerHTML = `<p class="error">Results didn't load. Check your connection and refresh the page.</p>`;
+  }
+}
+load();
+</script>
+</body>
+</html>

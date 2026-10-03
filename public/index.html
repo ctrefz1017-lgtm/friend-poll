@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Friendsgiving dates</title>
+<meta property="og:title" content="Friendsgiving: pick your dates 🦃">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦃</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Young+Serif&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<main id="app"><p class="hint">Loading the poll…</p></main>
+
+<script>
+const app = document.getElementById("app");
+let poll = null;
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const storeKey = () => `vote-${poll.id}`;
+const getSaved = () => { try { return JSON.parse(localStorage.getItem(storeKey())); } catch { return null; } };
+const setSaved = (v) => { try { localStorage.setItem(storeKey(), JSON.stringify(v)); } catch {} };
+let refreshTimer = null;
+
+async function load() {
+  try {
+    const r = await fetch("/api/poll", { cache: "no-store" });
+    if (!r.ok) throw new Error();
+    poll = await r.json();
+    document.title = poll.question;
+    const saved = getSaved();
+    saved ? showResults(poll, saved) : showForm();
+  } catch {
+    app.innerHTML = `<p class="error">The poll didn't load. Check your connection and refresh the page.</p>`;
+  }
+}
+
+function showForm(prefill) {
+  clearInterval(refreshTimer);
+  const saved = prefill || getSaved() || {};
+  const picked = new Set(saved.choices || []);
+  app.innerHTML = `
+    <p class="garland" aria-hidden="true">🍂🦃🥧🍂</p>
+    <h1>${esc(poll.question)}</h1>
+    <p class="hint">Check every date that works for you. You'll see the totals right after you vote.</p>
+    <form id="f" novalidate>
+      <label class="name" for="name">Your name</label>
+      <input type="text" id="name" autocomplete="given-name" maxlength="60" value="${esc(saved.name || "")}" required>
+      <fieldset>
+        <legend>Dates that work for you</legend>
+        ${poll.options.map((o, i) => `
+          <label class="opt"><input type="checkbox" name="c" value="${i}" ${picked.has(i) ? "checked" : ""}>${esc(o)}</label>`).join("")}
+      </fieldset>
+      <p class="error" id="err" role="alert"></p>
+      <button class="primary" id="go" type="submit">Send my vote</button>
+    </form>`;
+  document.getElementById("f").addEventListener("submit", submit);
+}
+
+async function submit(e) {
+  e.preventDefault();
+  const err = document.getElementById("err"), go = document.getElementById("go");
+  const name = document.getElementById("name").value.trim();
+  const choices = [...document.querySelectorAll('input[name="c"]:checked')].map((x) => Number(x.value));
+  if (!name) { err.textContent = "Add your name so your vote counts."; return; }
+  if (!choices.length) { err.textContent = "Pick at least one option."; return; }
+  go.disabled = true; go.textContent = "Sending…"; err.textContent = "";
+  try {
+    const r = await fetch("/api/poll", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name, choices }) });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error);
+    const mine = { name, choices };
+    setSaved(mine);
+    showResults(data, mine, true);
+  } catch (x) {
+    err.textContent = x.message || "Your vote didn't send. Check your connection and try again.";
+    go.disabled = false; go.textContent = "Send my vote";
+  }
+}
+
+function showResults(data, mine, justVoted) {
+  const max = Math.max(1, ...data.counts);
+  const picks = new Set(mine.choices);
+  app.innerHTML = `
+    <p class="garland" aria-hidden="true">🍂🦃🥧🍂</p>
+    <h1>${esc(data.question)}</h1>
+    <p class="hint">${justVoted ? `Thanks, ${esc(mine.name)}! Your vote is in. Save room for pie.` : `You've voted as ${esc(mine.name)}.`}</p>
+    <div id="bars">${data.options.map((o, i) => `
+      <div class="row">
+        <div class="row-top"><span>${esc(o)}${picks.has(i) ? ` <span class="you">(your pick)</span>` : ""}</span><span>${data.counts[i]}</span></div>
+        <div class="track" role="img" aria-label="${esc(o)}: ${data.counts[i]} votes"><div class="fill ${data.counts[i] ? "has" : ""}" data-w="${(data.counts[i] / max) * 100}"></div></div>
+      </div>`).join("")}</div>
+    <p class="meta">${data.voters} ${data.voters === 1 ? "person has" : "people have"} voted so far. Totals update on their own.</p>
+    <button class="link" id="change" type="button">Change my answer</button>`;
+  requestAnimationFrame(() => document.querySelectorAll(".fill").forEach((f) => (f.style.width = f.dataset.w + "%")));
+  document.getElementById("change").addEventListener("click", () => showForm(mine));
+  clearInterval(refreshTimer);
+  refreshTimer = setInterval(async () => {
+    try {
+      const r = await fetch("/api/poll", { cache: "no-store" });
+      if (r.ok) { const d = await r.json(); if (d.voters !== data.voters || d.counts.join() !== data.counts.join()) showResults(d, mine); }
+    } catch {}
+  }, 15000);
+}
+
+load();
+</script>
+</body>
+</html>
