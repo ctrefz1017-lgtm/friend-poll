@@ -45,3 +45,86 @@ td.check{text-align:center;font-weight:800}
 td.check.yes{background:var(--sun)}
 tr:last-child td{border-bottom:0}
 @media (prefers-reduced-motion:reduce){.fill,.opt{transition:none}}
+
+/* ---------- Invitation page ---------- */
+.invite-hero{background:var(--card);border:2px solid var(--ink);border-radius:20px;padding:1.6rem 1.3rem 1.4rem;box-shadow:0 6px 0 var(--ink);margin-bottom:2rem;text-align:center}
+.invite-hero .kicker{font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:.8rem;color:var(--blue);margin:.6rem 0 0}
+.invite-hero h1{margin:.2em 0 .6em}
+.details{list-style:none;padding:0;margin:0 0 1rem;display:grid;gap:.5rem;text-align:left}
+.details li{display:flex;gap:.7rem;align-items:flex-start;background:var(--bg);border-radius:12px;padding:.65rem .85rem;font-weight:600}
+.details li span.ico{flex:none;width:1.4em;text-align:center}
+.details li small{display:block;font-weight:500;color:var(--soft)}
+.details a{color:var(--blue)}
+.invite-hero .note{color:var(--soft);margin:.4rem 0 0}
+.cal{display:inline-block;margin-top:.9rem;font-weight:700;color:var(--blue)}
+section.block{margin:2.2rem 0}
+section.block h2{font-family:"Young Serif",Georgia,serif;font-weight:400;font-size:1.6rem;margin:0 0 .4rem}
+section.block > .hint{margin-bottom:1rem}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin:1rem 0}
+.seg button{font:inherit;font-weight:700;padding:.85rem;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--sun);border-color:var(--ink)}
+.stepper{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:.5rem .7rem;margin-bottom:1rem}
+.stepper .ctl{display:flex;align-items:center;gap:.9rem}
+.stepper button{font:inherit;font-weight:800;font-size:1.3rem;width:44px;height:44px;border-radius:12px;border:2px solid var(--ink);background:var(--bg);color:var(--ink);cursor:pointer}
+.stepper output{font-weight:800;font-size:1.3rem;min-width:1.5em;text-align:center}
+.saved{color:var(--soft);font-weight:600;margin:.6rem 0 0}
+.count-line{font-weight:700;margin:.8rem 0 0}
+.host-list{list-style:none;padding:0;margin:0;display:grid;gap:.5rem}
+.host-list li{background:var(--card);border:2px dashed var(--line);border-radius:14px;padding:.75rem 1rem;font-weight:600}
+.host-list li small{font-weight:500;color:var(--soft)}
+.cat{font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:.8rem;color:var(--soft);margin:1.4rem 0 .5rem}
+.dish{display:flex;align-items:center;justify-content:space-between;gap:.8rem;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:.7rem .75rem .7rem 1rem;margin-bottom:.5rem}
+.dish .what{font-weight:600}
+.dish .who{display:block;font-weight:500;font-size:.9rem;color:var(--soft)}
+.dish.taken{background:transparent}
+.dish.taken .what{color:var(--soft)}
+.dish.mine{background:var(--sun);border-color:var(--ink)}
+.dish.mine .what,.dish.mine .who{color:var(--ink)}
+.small-btn{font:inherit;font-weight:700;font-size:.95rem;flex:none;padding:.55rem .95rem;border-radius:11px;border:2px solid var(--ink);background:var(--blue);color:#fff;cursor:pointer}
+.small-btn.ghost{background:var(--card);color:var(--ink)}
+.small-btn:disabled{opacity:.6;cursor:wait}
+.small-btn:focus-visible,.seg button:focus-visible,.stepper button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.addrow{display:flex;gap:.5rem}
+.addrow input{flex:1;min-width:0}
+.sticky-name{position:sticky;top:0;z-index:2;background:var(--bg);padding:.7rem 0 .8rem;margin:0 0 .5rem;border-bottom:2px solid var(--line)}
+.toast{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--card);font-weight:600;padding:.75rem 1.1rem;border-radius:12px;max-width:calc(100% - 32px);opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+.toast.bad{background:var(--err)}
+.yes{color:#2F6B2F;font-weight:700}.no{color:var(--soft)}
+
+/* ---------- Intro: turkey waddles in with the invite ---------- */
+.intro{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.4rem;
+  padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);overflow:hidden;transition:opacity .6s ease}
+.intro.leaving{opacity:0;pointer-events:none}
+.intro .stage{position:relative;width:min(330px,88vw)}
+.walker{display:flex;flex-direction:column;align-items:center;animation:walkIn 2s cubic-bezier(.25,.8,.3,1) both}
+.wobble{display:flex;flex-direction:column;align-items:center;transform-origin:50% 100%;animation:waddle .32s ease-in-out 6 alternate both,settle .25s ease-out 1.92s forwards}
+.sign{position:relative;z-index:2;background:var(--card);border:2px solid var(--ink);border-radius:16px;box-shadow:0 5px 0 var(--ink);
+  padding:.9rem 1.2rem 1rem;text-align:center;width:100%;margin-bottom:-34px;animation:signPop .5s cubic-bezier(.3,1.6,.5,1) 2s both}
+.sign .k{margin:0;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:.75rem;color:var(--blue)}
+.sign .t{margin:.15rem 0 .2rem;font-family:"Young Serif",Georgia,serif;font-size:clamp(1.9rem,9vw,2.4rem);line-height:1.05;color:var(--ink)}
+.sign .d{margin:0;font-weight:600;color:var(--soft);font-size:.95rem}
+.turkey{width:190px;height:auto;display:block;overflow:visible}
+.turkey .leg{transform-box:fill-box;transform-origin:50% 0;animation:step .32s ease-in-out 6 alternate both,settle .2s ease-out 1.92s forwards}
+.turkey .leg.r{animation-delay:.16s}
+.turkey .head{transform-box:fill-box;transform-origin:50% 100%;animation:nod .5s ease-in-out 2.1s 2 alternate both}
+.gobble{position:absolute;right:-4px;bottom:62px;z-index:3;background:var(--ink);color:var(--card);font-weight:700;font-size:.85rem;
+  padding:.35rem .7rem;border-radius:12px 12px 12px 3px;opacity:0;animation:bubble 1.3s ease 2.2s both}
+.skip{font:inherit;font-weight:600;background:none;border:0;color:var(--soft);text-decoration:underline;cursor:pointer;padding:.4rem .6rem}
+.skip:focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:6px}
+@keyframes walkIn{from{transform:translateX(-115vw)}to{transform:translateX(0)}}
+@keyframes waddle{from{transform:rotate(-6deg) translateY(0)}to{transform:rotate(6deg) translateY(-6px)}}
+@keyframes settle{to{transform:rotate(0) translateY(0)}}
+@keyframes step{from{transform:rotate(-14deg)}to{transform:rotate(14deg)}}
+@keyframes signPop{0%{transform:scale(1)}50%{transform:scale(1.08) rotate(-2deg)}100%{transform:scale(1)}}
+@keyframes nod{from{transform:rotate(0)}to{transform:rotate(-10deg)}}
+@keyframes bubble{0%{opacity:0;transform:translateY(8px) scale(.8)}20%,80%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-6px)}}
+@media (prefers-reduced-motion:reduce){.walker,.wobble,.sign,.turkey .leg,.turkey .head{animation:none}.gobble{animation:none;opacity:1}}
+
+.allergy-note{display:flex;gap:.7rem;align-items:flex-start;background:var(--card);border:2px solid var(--blue);border-radius:14px;padding:.8rem 1rem;margin:0 0 1rem}
+.allergy-note .ico{flex:none;font-size:1.2rem;line-height:1.3}
+.allergy-note p{margin:0}
+.allergy-note strong{color:var(--blue)}
+.field{display:block;margin:0 0 1rem}
+.field label{display:block;font-weight:600;margin-bottom:.35rem}
+.field small{display:block;color:var(--soft);margin-top:.3rem}

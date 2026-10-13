@@ -1,7 +1,13 @@
-# Friend poll
+# Friendsgiving site
 
-- Edit `poll-config.mjs` to set your question and options.
-- Poll page: `https://YOUR-SITE.netlify.app/`
-- Your private results: `https://YOUR-SITE.netlify.app/admin.html?key=YOUR_ADMIN_KEY`
-- Set `ADMIN_KEY` under Site configuration → Environment variables, then redeploy.
-- New poll later? Change `id` in `poll-config.mjs` (e.g. "poll-2") so old votes start fresh.
+## Date poll
+- Poll page: `/`
+- Private results: `/admin.html?key=YOUR_ADMIN_KEY`
+- Edit `poll-config.mjs` to change the question or options.
+
+## Invitation + potluck sign-up
+- Invite page (text this to friends): `/invite`
+- Private guest list: `/invite-admin?key=YOUR_ADMIN_KEY`
+- Edit `event-config.mjs` to set the time, address, host dishes and suggested dishes.
+
+`ADMIN_KEY` lives under Site configuration → Environment variables.

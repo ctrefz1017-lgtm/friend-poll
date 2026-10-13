@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>You're invited to Friendsgiving!</title>
+<meta property="og:title" content="You're invited to Friendsgiving! 🦃">
+<meta property="og:description" content="Sunday, November 15th at 3 PM. RSVP and sign up for a dish.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦃</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Young+Serif&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="intro" id="intro" role="dialog" aria-label="You're invited to Friendsgiving">
+  <div class="stage">
+    <div class="walker"><div class="wobble">
+      <div class="sign">
+        <p class="k">You're invited to</p>
+        <p class="t">Friendsgiving!</p>
+        <p class="d">Sunday, Nov 15 · 3 PM</p>
+      </div>
+      <svg class="turkey" viewBox="0 0 200 200" aria-hidden="true">
+        <g>
+          <g transform="rotate(-72 100 120)"><ellipse cx="100" cy="62" rx="17" ry="50" fill="#E8A33D"/></g>
+          <g transform="rotate(-48 100 120)"><ellipse cx="100" cy="62" rx="17" ry="52" fill="#D9662B"/></g>
+          <g transform="rotate(-24 100 120)"><ellipse cx="100" cy="62" rx="17" ry="54" fill="#9E1B32"/></g>
+          <g><ellipse cx="100" cy="60" rx="17" ry="56" fill="#E8A33D"/></g>
+          <g transform="rotate(24 100 120)"><ellipse cx="100" cy="62" rx="17" ry="54" fill="#9E1B32"/></g>
+          <g transform="rotate(48 100 120)"><ellipse cx="100" cy="62" rx="17" ry="52" fill="#D9662B"/></g>
+          <g transform="rotate(72 100 120)"><ellipse cx="100" cy="62" rx="17" ry="50" fill="#E8A33D"/></g>
+        </g>
+        <g fill="none" stroke="#E8A33D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+          <path class="leg l" d="M86 162 L84 190 L76 194 M84 190 L90 195"/>
+          <path class="leg r" d="M114 162 L116 190 L108 195 M116 190 L124 194"/>
+        </g>
+        <ellipse cx="62" cy="96" rx="12" ry="34" transform="rotate(-28 62 96)" fill="#6A412C"/>
+        <ellipse cx="138" cy="96" rx="12" ry="34" transform="rotate(28 138 96)" fill="#6A412C"/>
+        <ellipse cx="100" cy="130" rx="50" ry="44" fill="#7A4E36"/>
+        <ellipse cx="100" cy="140" rx="30" ry="27" fill="#A8714C"/>
+        <g class="head">
+          <circle cx="100" cy="92" r="22" fill="#8A5A3E"/>
+          <circle cx="91" cy="88" r="4" fill="#3B1F14"/><circle cx="109" cy="88" r="4" fill="#3B1F14"/>
+          <circle cx="92.4" cy="86.6" r="1.3" fill="#FFF8EE"/><circle cx="110.4" cy="86.6" r="1.3" fill="#FFF8EE"/>
+          <circle cx="84" cy="97" r="4" fill="#E58A8A" opacity=".7"/><circle cx="116" cy="97" r="4" fill="#E58A8A" opacity=".7"/>
+          <path d="M95 95 L105 95 L100 104 Z" fill="#E8A33D"/>
+          <ellipse cx="106" cy="104" rx="3.5" ry="7" fill="#C8323C"/>
+        </g>
+      </svg>
+    </div></div>
+    <span class="gobble" aria-hidden="true">gobble gobble!</span>
+  </div>
+  <button class="skip" type="button" id="skip">Skip</button>
+</div>
+<main id="app"><p class="hint">Setting the table…</p></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const app = document.getElementById("app");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const ls = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+const norm = (s) => String(s || "").trim().toLowerCase();
+
+const RSVP_KEY = "fg-rsvp";
+let S = null;                       // latest state from the server
+let me = ls.get("fg-name") || "";   // the guest's name, remembered on this phone
+let rsvp = ls.get(RSVP_KEY) || { attending: true, count: 1, sent: false };
+let busy = false;
+
+function toast(msg, bad) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.className = "toast show" + (bad ? " bad" : "");
+  clearTimeout(toast.t); toast.t = setTimeout(() => (t.className = "toast"), 3200);
+}
+
+function fmtTime(hm) {
+  if (!hm) return "";
+  const [h, m] = hm.split(":").map(Number);
+  return `${((h + 11) % 12) + 1}${m ? ":" + String(m).padStart(2, "0") : ""} ${h < 12 ? "AM" : "PM"}`;
+}
+
+function calLink(e) {
+  if (!e.start) return "";
+  // Times are Mountain time (MST on Nov 15, UTC-7).
+  const toUTC = (hm) => {
+    const [h, m] = hm.split(":").map(Number);
+    const d = new Date(Date.UTC(...e.date.split("-").map((x, i) => i === 1 ? x - 1 : +x), h + 7, m));
+    return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  };
+  const end = e.end || (() => { const [h, m] = e.start.split(":").map(Number); return `${h + 3}:${m}`; })();
+  const p = new URLSearchParams({ action: "TEMPLATE", text: "Friendsgiving", dates: `${toUTC(e.start)}/${toUTC(end)}`, details: `Hosted by ${e.hosts}. ${location.href}`, location: e.address || "" });
+  return `https://calendar.google.com/calendar/render?${p}`;
+}
+
+async function api(body) {
+  const r = await fetch("/api/invite", body ? { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) } : { cache: "no-store" });
+  const d = await r.json().catch(() => ({}));
+  if (d.event) S = d;
+  if (!r.ok) throw new Error(d.error || "That didn't go through. Check your connection and try again.");
+  return d;
+}
+
+function needName() {
+  const v = document.getElementById("me").value.trim();
+  if (!v) { toast("Add your name first, up under \u201cCan you make it?\u201d", true); document.getElementById("me").focus(); return null; }
+  me = v; ls.set("fg-name", me); return me;
+}
+
+function render() {
+  const e = S.event;
+  const scrollY = window.scrollY;
+  const active = document.activeElement && document.activeElement.id;
+  const draft = document.getElementById("custom")?.value || "";
+  const claimed = Object.fromEntries(S.claims.filter((c) => !c.custom).map((c) => [c.key, c]));
+  const customs = S.claims.filter((c) => c.custom);
+  const mine = (c) => me && norm(c.name) === norm(me);
+  const time = e.start ? `${fmtTime(e.start)}${e.end ? " – " + fmtTime(e.end) : ""}` : "";
+  const mapUrl = e.address ? `https://maps.google.com/?q=${encodeURIComponent(e.address)}` : "";
+  const myDishes = S.claims.filter(mine);
+
+  const dishRow = (key, label) => {
+    const c = claimed[key];
+    if (!c) return `<div class="dish"><span class="what">${esc(label)}</span><button class="small-btn" data-claim="${key}">I'll bring it</button></div>`;
+    if (mine(c)) return `<div class="dish mine"><span class="what">${esc(label)}<span class="who">You're bringing this</span></span><button class="small-btn ghost" data-release="${c.key}">Undo</button></div>`;
+    return `<div class="dish taken"><span class="what">${esc(label)}<span class="who">${esc(c.name)} is bringing this</span></span></div>`;
+  };
+
+  app.innerHTML = `
+
+    <div class="invite-hero">
+      <p class="garland" aria-hidden="true">🍂🦃🥧🍂</p>
+      <p class="kicker">You're invited</p>
+      <h1>Friendsgiving!</h1>
+      <ul class="details">
+        <li><span class="ico" aria-hidden="true">📅</span><span>${esc(e.dateLabel)}</span></li>
+        <li><span class="ico" aria-hidden="true">🕓</span><span>${time ? esc(time) : `Time coming soon`}</span></li>
+        <li><span class="ico" aria-hidden="true">📍</span><span>${e.address ? `<a href="${mapUrl}" target="_blank" rel="noopener">${esc(e.address)}</a>` : "Address coming soon"}</span></li>
+        <li><span class="ico" aria-hidden="true">🏡</span><span>Hosted by ${esc(e.hosts)}</span></li>
+        <li><span class="ico" aria-hidden="true">🍷</span><span>BYOB<small>Bring whatever you'd like to drink</small></span></li>
+      </ul>
+      <p class="note">${esc(e.note)}</p>
+      ${e.start ? `<a class="cal" href="${calLink(e)}" target="_blank" rel="noopener">Add to Google Calendar</a>` : ""}
+    </div>
+
+    <section class="block" aria-labelledby="h-rsvp">
+      <h2 id="h-rsvp">Can you make it?</h2>
+      <label class="name" for="me">Your name</label>
+      <input type="text" id="me" autocomplete="given-name" maxlength="60" placeholder="So we know who's coming and bringing what" value="${esc(me)}">
+      <div class="seg" role="group" aria-label="RSVP">
+        <button type="button" data-att="yes" aria-pressed="${rsvp.attending}">Count me in!</button>
+        <button type="button" data-att="no" aria-pressed="${!rsvp.attending}">Can't make it</button>
+      </div>
+      ${rsvp.attending ? `
+      <div class="stepper">
+        <span><strong>How many people?</strong><br><small class="no">Including you</small></span>
+        <span class="ctl"><button type="button" data-step="-1" aria-label="One fewer">–</button><output id="cnt">${rsvp.count}</output><button type="button" data-step="1" aria-label="One more">+</button></span>
+      </div>
+      <div class="field">
+        <label for="allergy">Any food allergies? <span class="no">(optional)</span></label>
+        <input type="text" id="allergy" maxlength="120" placeholder="e.g. tree nuts, shellfish" value="${esc(rsvp.allergies || "")}">
+        <small>We'll add it to the allergy heads-up for everyone bringing food. Your name won't be shown.</small>
+      </div>` : ""}
+      <button class="primary" id="send-rsvp" type="button">${rsvp.sent ? "Update my RSVP" : "Send my RSVP"}</button>
+      ${rsvp.sent ? `<p class="saved">✓ RSVP saved${rsvp.attending ? `: ${rsvp.count} ${rsvp.count === 1 ? "person" : "people"}` : ": can't make it"}. You can change it anytime.</p>` : ""}
+      <p class="count-line">${S.rsvp.guests ? `🦃 ${S.rsvp.guests} ${S.rsvp.guests === 1 ? "person is" : "people are"} coming so far` : "Be the first to RSVP!"}</p>
+    </section>
+
+    <section class="block" aria-labelledby="h-hosts">
+      <h2 id="h-hosts">The hosts are making</h2>
+      <ul class="host-list">${e.hostDishes.map((d) => `<li>${esc(d.name)}${d.note ? ` <small>(${esc(d.note)})</small>` : ""}</li>`).join("")}</ul>
+    </section>
+
+    <section class="block" aria-labelledby="h-food">
+      <h2 id="h-food">Sign up for a dish</h2>
+      <p class="hint">Tap a dish to claim it, one person per dish. Don't see what you want to bring? Add your own at the bottom.${myDishes.length ? ` <strong>You're bringing: ${myDishes.map((c) => esc(c.label)).join(", ")}.</strong>` : ""}</p>
+      ${S.allergies.length ? `<div class="allergy-note" role="note"><span class="ico" aria-hidden="true">⚠️</span><p><strong>Allergy heads-up.</strong> Someone coming is allergic to ${esc(new Intl.ListFormat("en", { type: "conjunction" }).format(S.allergies).toLowerCase())}. Please leave ${S.allergies.length === 1 ? "it" : "them"} out of your dish, or let us know if it has ${S.allergies.length === 1 ? "it" : "them"}.</p></div>` : ""}
+      ${e.suggested.map((g) => `<p class="cat">${esc(g.category)}</p>${g.items.map((i) => dishRow(i.key, i.label)).join("")}`).join("")}
+
+      <p class="cat">Bringing something else?</p>
+      <form class="addrow" id="add">
+        <input type="text" id="custom" maxlength="80" placeholder="e.g. Grandma's cornbread" aria-label="Your own dish" value="${esc(draft)}">
+        <button class="small-btn" type="submit">Add</button>
+      </form>
+      ${customs.length ? `<p class="cat">Guests are also bringing</p>${customs.map((c) => mine(c)
+        ? `<div class="dish mine"><span class="what">${esc(c.label)}<span class="who">You're bringing this</span></span><button class="small-btn ghost" data-release="${c.key}">Undo</button></div>`
+        : `<div class="dish taken"><span class="what">${esc(c.label)}<span class="who">${esc(c.name)} is bringing this</span></span></div>`).join("")}` : ""}
+    </section>
+    <p class="meta">This page updates on its own as people sign up.</p>`;
+
+  window.scrollTo(0, scrollY);
+  if (active && document.getElementById(active)) document.getElementById(active).focus();
+}
+
+async function act(body, okMsg) {
+  if (busy) return; busy = true;
+  document.querySelectorAll(".small-btn,.primary").forEach((b) => (b.disabled = true));
+  let ok = false;
+  try { await api(body); ok = true; if (okMsg) toast(okMsg); }
+  catch (x) { toast(x.message, true); }
+  finally { busy = false; render(); }
+  return ok;
+}
+
+app.addEventListener("input", (ev) => {
+  if (ev.target.id === "allergy") { rsvp.allergies = ev.target.value; ls.set(RSVP_KEY, rsvp); return; } if (ev.target.id === "me") { me = ev.target.value.trim(); ls.set("fg-name", me); } });
+
+app.addEventListener("click", (ev) => {
+  const b = ev.target.closest("button"); if (!b) return;
+  if (b.dataset.att) { rsvp.attending = b.dataset.att === "yes"; ls.set(RSVP_KEY, rsvp); render(); return; }
+  if (b.dataset.step) { rsvp.count = Math.min(20, Math.max(1, rsvp.count + Number(b.dataset.step))); ls.set(RSVP_KEY, rsvp); document.getElementById("cnt").textContent = rsvp.count; return; }
+  if (b.id === "send-rsvp") {
+    if (!needName()) return;
+    act({ action: "rsvp", name: me, attending: rsvp.attending, count: rsvp.count, allergies: rsvp.allergies || "" },
+        rsvp.attending ? "RSVP saved. See you there! 🦃" : "Thanks for letting us know. We'll miss you!")
+      .then((ok) => { if (ok) { rsvp.sent = true; ls.set(RSVP_KEY, rsvp); render(); } });
+    return;
+  }
+  if (b.dataset.claim) { if (needName()) act({ action: "claim", name: me, key: b.dataset.claim }, "You're signed up. Thank you!"); return; }
+  if (b.dataset.release) { if (needName()) act({ action: "release", name: me, key: b.dataset.release }, "Removed from your list."); return; }
+});
+
+app.addEventListener("submit", (ev) => {
+  if (ev.target.id !== "add") return;
+  ev.preventDefault();
+  const input = document.getElementById("custom");
+  const label = input.value.trim();
+  if (!label) { toast("Type what you're bringing.", true); input.focus(); return; }
+  if (!needName()) return;
+  input.value = "";
+  act({ action: "custom", name: me, label }, "Added. Thank you!");
+});
+
+(async function init() {
+  try { await api(); render(); }
+  catch { app.innerHTML = `<p class="error">The invite didn't load. Check your connection and refresh the page.</p>`; return; }
+  setInterval(async () => {
+    const typing = ["me", "custom", "allergy"].includes(document.activeElement?.id);
+    if (busy || typing || document.hidden) return;
+    const before = JSON.stringify([S.claims, S.rsvp, S.allergies]);
+    try { await api(); if (JSON.stringify([S.claims, S.rsvp, S.allergies]) !== before) render(); } catch {}
+  }, 20000);
+})();
+</script>
+<script>
+(function () {
+  const intro = document.getElementById("intro");
+  if (!intro) return;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.documentElement.style.overflow = "hidden";
+  let done = false;
+  function finish() {
+    if (done) return; done = true;
+    intro.classList.add("leaving");
+    document.documentElement.style.overflow = "";
+    setTimeout(() => intro.remove(), 650);
+  }
+  document.getElementById("skip").addEventListener("click", finish);
+  setTimeout(finish, reduce ? 2200 : 3900);
+})();
+</script>
+</body>
+</html>

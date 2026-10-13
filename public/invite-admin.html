@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Friendsgiving guest list (private)</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥧</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Young+Serif&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<main class="wide" id="app"><p class="hint">Loading the guest list…</p></main>
+<script>
+const app = document.getElementById("app");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const key = new URLSearchParams(location.search).get("key") || "";
+const mt = (iso) => new Date(iso).toLocaleString("en-US", { timeZone: "America/Denver", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " MT";
+
+async function load() {
+  try {
+    const r = await fetch("/api/invite-admin?key=" + encodeURIComponent(key), { cache: "no-store" });
+    const d = await r.json();
+    if (!r.ok) { app.innerHTML = `<p class="error">${esc(d.error)}</p>`; return; }
+    const yes = d.rsvps.filter((x) => x.attending), no = d.rsvps.filter((x) => !x.attending);
+    const total = yes.reduce((n, x) => n + x.count, 0);
+    app.innerHTML = `
+      <p class="garland" aria-hidden="true">🍂🦃🥧🍂</p>
+      <h1>Friendsgiving guest list</h1>
+      <p class="hint">Only you can see this page.</p>
+      <p class="count-line">🦃 ${total} ${total === 1 ? "person" : "people"} coming · ${yes.length} RSVP${yes.length === 1 ? "" : "s"} yes · ${no.length} can't make it · ${d.claims.length} dish${d.claims.length === 1 ? "" : "es"} signed up</p>
+
+      <h2>RSVPs</h2>
+      ${d.rsvps.length ? `<div class="scroll"><table>
+        <thead><tr><th>Name</th><th>Coming?</th><th>People</th><th>Allergies</th><th>Updated</th></tr></thead>
+        <tbody>${d.rsvps.map((x) => `<tr><td>${esc(x.name)}</td><td class="${x.attending ? "yes" : "no"}">${x.attending ? "Yes" : "No"}</td><td>${x.attending ? x.count : "–"}</td><td>${esc(x.allergies || "–")}</td><td>${mt(x.at)}</td></tr>`).join("")}</tbody>
+      </table></div>` : `<p class="meta">No RSVPs yet.</p>`}
+
+      <h2>Who's bringing what</h2>
+      ${d.claims.length ? `<div class="scroll"><table>
+        <thead><tr><th>Dish</th><th>Category</th><th>Bringing it</th><th>Signed up</th></tr></thead>
+        <tbody>${d.claims.map((c) => `<tr><td>${esc(c.label)}</td><td>${esc(c.custom ? "Their own idea" : c.category)}</td><td>${esc(c.name)}</td><td>${mt(c.at)}</td></tr>`).join("")}</tbody>
+      </table></div>` : `<p class="meta">No dishes claimed yet.</p>`}
+      <p class="meta"><button class="link" type="button" onclick="load()">Refresh</button></p>`;
+  } catch {
+    app.innerHTML = `<p class="error">The guest list didn't load. Check your connection and refresh the page.</p>`;
+  }
+}
+load();
+</script>
+</body>
+</html>
