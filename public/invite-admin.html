@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Friendsgiving guest list (private)</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥧</text></svg>">
+<link rel="icon" type="image/png" href="/img/turkey.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Young+Serif&display=swap" rel="stylesheet">
@@ -27,7 +27,7 @@ async function load() {
     const yes = d.rsvps.filter((x) => x.attending), no = d.rsvps.filter((x) => !x.attending);
     const total = yes.reduce((n, x) => n + x.count, 0);
     app.innerHTML = `
-      <p class="garland" aria-hidden="true">🍂🦃🥧🍂</p>
+      <img class="top-turkey" src="/img/turkey.png" width="582" height="506" alt="">
       <h1>Friendsgiving guest list</h1>
       <p class="hint">Only you can see this page.</p>
       <p class="count-line">🦃 ${total} ${total === 1 ? "person" : "people"} coming · ${yes.length} RSVP${yes.length === 1 ? "" : "s"} yes · ${no.length} can't make it · ${d.claims.length} dish${d.claims.length === 1 ? "" : "es"} signed up</p>

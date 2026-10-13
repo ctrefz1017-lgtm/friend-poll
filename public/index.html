@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Friendsgiving dates</title>
 <meta property="og:title" content="Friendsgiving: pick your dates 🦃">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦃</text></svg>">
+<link rel="icon" type="image/png" href="/img/turkey.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Young+Serif&display=swap" rel="stylesheet">
@@ -41,7 +41,7 @@ function showForm(prefill) {
   const saved = prefill || getSaved() || {};
   const picked = new Set(saved.choices || []);
   app.innerHTML = `
-    <p class="garland" aria-hidden="true">🍂🦃🥧🍂</p>
+    <img class="top-turkey" src="/img/turkey.png" width="582" height="506" alt="">
     <h1>${esc(poll.question)}</h1>
     <p class="hint">Check every date that works for you. You'll see the totals right after you vote.</p>
     <form id="f" novalidate>
@@ -83,7 +83,7 @@ function showResults(data, mine, justVoted) {
   const max = Math.max(1, ...data.counts);
   const picks = new Set(mine.choices);
   app.innerHTML = `
-    <p class="garland" aria-hidden="true">🍂🦃🥧🍂</p>
+    <img class="top-turkey" src="/img/turkey.png" width="582" height="506" alt="">
     <h1>${esc(data.question)}</h1>
     <p class="hint">${justVoted ? `Thanks, ${esc(mine.name)}! Your vote is in. Save room for pie.` : `You've voted as ${esc(mine.name)}.`}</p>
     <div id="bars">${data.options.map((o, i) => `
